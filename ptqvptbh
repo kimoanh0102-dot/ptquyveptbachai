@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mastery: Phương Trình Quy Về PT Bậc Hai - Toán 10</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+    <script>
+        window.MathJax = {
+            tex: { 
+                inlineMath: [['$', '$'], ['\\(', '\\)']], 
+                displayMath: [['$$', '$$']],
+                processEscapes: true
+            },
+            options: { enableMenu: false },
+            svg: { fontCache: 'global' }
+        };
+    </script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background: #f4f7fb; color: #1e2937; }
+        .math-render { opacity: 0; transition: opacity 0.5s ease; }
+        .math-render.ready { opacity: 1; }
+        .choice-btn:active { transform: scale(0.97); }
+        .explanation-box { 
+            border-left: 8px solid #0284c7; 
+            background-color: #f0f9ff;
+            box-shadow: 0 4px 12px rgba(2, 132, 199, 0.1);
+            animation: slideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        @keyframes slideUp { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
+        .btn-check { box-shadow: 0 10px 20px -5px rgba(2, 132, 199, 0.4); }
+        .item-row { transition: all 0.2s ease; }
+        .item-row:hover { background-color: #ffffff; }
+    </style>
+</head>
+<body class="min-h-screen flex items-center justify-center p-2 md:p-6">
+    <div id="game-app" class="w-full max-w-5xl bg-white rounded-[2.5rem] shadow-[0_40px_80px_-20px_rgba(0,0,0,0.2)] border border-gray-100 flex flex-col">
+        
+        <!-- Header -->
+        <div class="bg-sky-600 p-8 text-white text-center relative overflow-hidden rounded-t-[2.5rem]">
+            <div class="absolute inset-0 bg-gradient-to-br from-sky-800 via-sky-600 to-blue-500 opacity-95"></div>
+            <div class="relative z-10">
+                <h1 class="text-3xl font-extrabold tracking-tight text-white mb-2 italic uppercase">PHƯƠNG TRÌNH QUY VỀ BẬC HAI</h1>
+                <p class="text-sky-100 text-sm font-medium opacity-90 uppercase tracking-[0.3em]">Hệ thống luyện đề chuẩn hóa - Phương pháp thử lại</p>
+            </div>
+        </div>
+
+        <!-- Progress bar -->
+        <div id="progress-container" class="hidden h-3 bg-gray-100 relative">
+            <div id="progress-bar" class="h-full bg-gradient-to-r from-sky-400 to-emerald-500 transition-all duration-700 w-0"></div>
+        </div>
+
+        <!-- Content Area -->
+        <div id="main-content" class="p-6 md:p-12 flex-grow min-h-[600px] flex flex-col overflow-y-auto">
+            <div id="start-screen" class="text-center py-16 my-auto">
+                <div class="text-[10rem] mb-8 leading-none">🚀</div>
+                <h2 class="text-4xl font-black text-gray-800 mb-6 uppercase tracking-tighter">SẴN SÀNG LUYỆN TẬP</h2>
+                <p class="text-gray-500 mb-12 max-w-2xl mx-auto leading-relaxed text-xl">
+                    Hệ thống có 50 câu hỏi. Lời giải áp dụng phương pháp chuẩn: <b>Bình phương - Giải - Thử lại</b>. <br>
+                    Mỗi lượt 15 câu, đảm bảo <b class="text-sky-600">tỷ lệ lặp lại so với đề ngay trước đó là 0%</b>.
+                </p>
+                <button onclick="initGame()" class="bg-sky-600 hover:bg-sky-700 text-white px-24 py-6 rounded-[2rem] font-black text-2xl shadow-2xl transition-all active:scale-95 transform hover:-translate-y-1">BẮT ĐẦU NGAY</button>
+            </div>
+        </div>
+
+        <!-- Footer Control -->
+        <div id="footer-actions" class="hidden p-8 bg-gray-50 border-t flex flex-col md:flex-row justify-between items-center gap-6 rounded-b-[2.5rem]">
+            <div id="status" class="text-lg font-black text-sky-600 uppercase tracking-[0.25em]">CÂU 1 / 15</div>
+            <div class="flex gap-4 w-full md:w-auto">
+                <button id="check-btn" onclick="processAnswer()" class="flex-1 md:flex-none bg-sky-600 hover:bg-sky-700 text-white px-16 py-4 rounded-2xl font-bold text-xl transition shadow-lg btn-check active:scale-95">Kiểm tra</button>
+                <button id="next-btn" onclick="renderNext()" class="hidden flex-1 md:flex-none bg-emerald-600 hover:bg-emerald-700 text-white px-16 py-4 rounded-2xl font-bold text-xl shadow-lg transition active:scale-95">Tiếp theo →</button>
+                <button id="result-btn" onclick="finishGame()" class="hidden flex-1 md:flex-none bg-orange-500 hover:bg-orange-600 text-white px-16 py-4 rounded-2xl font-bold text-xl shadow-lg transition active:scale-95">Kết quả</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const MASTER_POOL = {
+            part1: [
+                { id: "p1_1", question: "Nghiệm của phương trình $\\sqrt{x^2+9} = 3$ là:", options: ["$x = -1$", "$x = 0$", "$x = 4$", "$x = -\\frac{1}{3}$"], correct: 1, explanation: "Bình phương hai vế phương trình ta được: $x^2 + 9 = 9 \\Leftrightarrow x^2 = 0 \\Leftrightarrow x = 0$. <br>Thay $x=0$ vào phương trình ban đầu ta được $\\sqrt{9} = 3$ (đúng). Vậy nghiệm là $x=0$." },
+                { id: "p1_2", question: "Bình phương hai vế phương trình $\\sqrt{x+2} = \\sqrt{3x+1}$ rồi biến đổi ta được phương trình hệ quả nào?", options: ["$3x - 1 = 0$", "$2x + 1 = 0$", "$2x - 1 = 0$", "$2x + 3 = 0$"], correct: 2, explanation: "Bình phương hai vế phương trình, ta được: <br>$x + 2 = 3x + 1 \\Leftrightarrow 3x - x + 1 - 2 = 0 \\Leftrightarrow 2x - 1 = 0$." },
+                { id: "p1_3", question: "Tập nghiệm của phương trình $\\sqrt{2x^2-3x-4} = \\sqrt{x^2-6}$ là:", options: ["$S = \\{1; 2\\}$", "$S = \\{1\\}$", "$S = \\{2\\}$", "$S = \\emptyset$"], correct: 3, explanation: "Bình phương hai vế ta được: $2x^2 - 3x - 4 = x^2 - 6 \\Leftrightarrow x^2 - 3x + 2 = 0$. <br>Giải phương trình hệ quả ta được $x=1$ hoặc $x=2$. <br>- Thay $x=1$ vào phương trình gốc, biểu thức dưới căn là $\\sqrt{-5}$ (không xác định, loại). <br>- Thay $x=2$ vào phương trình gốc, biểu thức dưới căn là $\\sqrt{-2}$ (không xác định, loại). <br>Vậy phương trình vô nghiệm." },
+                { id: "p1_4", question: "Tập nghiệm của phương trình $\\sqrt{3-x} = \\sqrt{x+2}$ là:", options: ["$S = \\emptyset$", "$S = \\{-2; \\frac{1}{2}\\}$", "$S = \\{\\frac{1}{2}\\}$", "$S = \\{-\\frac{1}{2}\\}$"], correct: 2, explanation: "Bình phương hai vế ta được: $3 - x = x + 2 \\Leftrightarrow 2x = 1 \\Leftrightarrow x = \\frac{1}{2}$. <br>Thay $x = \\frac{1}{2}$ vào phương trình ban đầu ta được $\\sqrt{\\frac{5}{2}} = \\sqrt{\\frac{5}{2}}$ (đúng). <br>Vậy tập nghiệm là $S = \\left\\{\\frac{1}{2}\\right\\}$." },
+                { id: "p1_5", question: "Số nghiệm của phương trình $\\sqrt{x^2-7} = \\sqrt{1-x^2}$ là:", options: ["Vô số", "2", "1", "0"], correct: 3, explanation: "Bình phương hai vế ta được: $x^2 - 7 = 1 - x^2 \\Leftrightarrow 2x^2 = 8 \\Leftrightarrow x^2 = 4 \\Leftrightarrow x = \\pm 2$. <br>Thay $x = \\pm 2$ vào phương trình ban đầu, ta thu được $\\sqrt{-3} = \\sqrt{-3}$ (biểu thức dưới căn âm, vô lý). <br>Vậy phương trình vô nghiệm (số nghiệm là $0$)." },
+                { id: "p1_6", question: "Tập nghiệm của phương trình $\\sqrt{2x-1} = 2-x$ là:", options: ["$S = \\{1; 5\\}$", "$S = \\{1\\}$", "$S = \\{5\\}$", "$S = \\{2; 3\\}$"], correct: 1, explanation: "Bình phương hai vế ta được: $2x - 1 = (2-x)^2 \\Leftrightarrow 2x - 1 = 4 - 4x + x^2 \\Leftrightarrow x^2 - 6x + 5 = 0$. <br>Phương trình hệ quả có nghiệm $x=1$, $x=5$. <br>- Thay $x=1$ vào phương trình ban đầu: $\\sqrt{1} = 1 \\Leftrightarrow 1=1$ (đúng, nhận). <br>- Thay $x=5$ vào phương trình ban đầu: $\\sqrt{9} = -3 \\Leftrightarrow 3 = -3$ (sai, loại). <br>Vậy phương trình có tập nghiệm $S = \\{1\\}$." },
+                { id: "p1_7", question: "Tập nghiệm của phương trình $\\sqrt{2x-1} = -x^2-5$ là:", options: ["$S = \\{1; 5\\}$", "$S = \\{1\\}$", "$S = \\{5\\}$", "$S = \\emptyset$"], correct: 3, explanation: "Nhận thấy vế trái $\\sqrt{2x-1} \\ge 0$ với mọi $x$ xác định. <br>Vế phải $-x^2 - 5 < 0$ với mọi số thực $x$. <br>Do đó, không có giá trị nào của $x$ để hai vế bằng nhau. Phương trình vô nghiệm." },
+                { id: "p1_8", question: "Tập nghiệm $S$ của phương trình $\\sqrt{2x-3} = x-3$ là:", options: ["$S = \\emptyset$", "$S = \\{2\\}$", "$S = \\{6; 2\\}$", "$S = \\{6\\}$"], correct: 3, explanation: "Bình phương hai vế: $2x-3 = (x-3)^2 \\Leftrightarrow 2x-3 = x^2 - 6x + 9 \\Leftrightarrow x^2 - 8x + 12 = 0$. <br>Phương trình hệ quả có hai nghiệm là $x=6$, $x=2$. <br>- Thay $x=6$ vào phương trình gốc: $\\sqrt{9} = 3 \\Leftrightarrow 3=3$ (đúng, nhận). <br>- Thay $x=2$ vào phương trình gốc: $\\sqrt{1} = -1 \\Leftrightarrow 1=-1$ (sai, loại). <br>Vậy $S = \\{6\\}$." },
+                { id: "p1_9", question: "Số nghiệm của phương trình $\\sqrt{3x-2} = x$ là:", options: ["2", "1", "3", "0"], correct: 0, explanation: "Bình phương hai vế: $3x-2 = x^2 \\Leftrightarrow x^2-3x+2=0$. Giải ra ta được $x=1$, $x=2$. <br>- Thay $x=1$ vào phương trình gốc: $\\sqrt{1} = 1$ (đúng, nhận). <br>- Thay $x=2$ vào phương trình gốc: $\\sqrt{4} = 2$ (đúng, nhận). <br>Cả hai nghiệm đều thỏa mãn. Phương trình có $2$ nghiệm." },
+                { id: "p1_10", question: "Số nghiệm nguyên dương của phương trình $\\sqrt{x-1} = x-3$ là:", options: ["0", "1", "2", "3"], correct: 1, explanation: "Bình phương hai vế: $x-1 = (x-3)^2 \\Leftrightarrow x-1 = x^2 - 6x + 9 \\Leftrightarrow x^2 - 7x + 10 = 0$. <br>Giải ra ta được $x=2$, $x=5$. <br>- Thay $x=2$ vào phương trình ban đầu: $\\sqrt{1} = -1$ (sai, loại). <br>- Thay $x=5$ vào phương trình ban đầu: $\\sqrt{4} = 2$ (đúng, nhận). <br>Phương trình có $1$ nghiệm nguyên dương là $x=5$." },
+                { id: "p1_11", question: "Tổng các nghiệm của phương trình $\\sqrt{2x-1} = x-2$ bằng:", options: ["6", "1", "5", "2"], correct: 2, explanation: "Bình phương hai vế: $2x-1 = (x-2)^2 \\Leftrightarrow 2x-1 = x^2-4x+4 \\Leftrightarrow x^2-6x+5=0$. <br>Giải phương trình hệ quả ta được $x=1$, $x=5$. <br>- Thay $x=1$: $\\sqrt{1} = -1$ (sai, loại). <br>- Thay $x=5$: $\\sqrt{9} = 3$ (đúng, nhận). <br>Phương trình chỉ có $1$ nghiệm là $x=5$, nên tổng các nghiệm bằng $5$." },
+                { id: "p1_12", question: "Nghiệm của phương trình $\\sqrt{x^2-4x+3} = \\sqrt{1-x}$ là:", options: ["$x = 1$", "$x = 2$", "$x = 1, x = 2$", "Vô nghiệm"], correct: 0, explanation: "Bình phương hai vế: $x^2-4x+3 = 1-x \\Leftrightarrow x^2-3x+2=0$. <br>Phương trình có nghiệm $x=1$ và $x=2$. <br>- Thay $x=1$ vào phương trình gốc: $\\sqrt{0} = \\sqrt{0}$ (đúng, nhận). <br>- Thay $x=2$ vào phương trình gốc: $\\sqrt{-1} = \\sqrt{-1}$ (vô lý, loại). <br>Vậy nghiệm của phương trình là $x=1$." },
+                { id: "p1_13", question: "Giải phương trình $\\sqrt{2x^2-3x-1} = \\sqrt{x^2-x+2}$.", options: ["$x = -1, x = 3$", "$x = 1, x = -3$", "$x = 3$", "Vô nghiệm"], correct: 0, explanation: "Bình phương hai vế: $2x^2-3x-1 = x^2-x+2 \\Leftrightarrow x^2-2x-3=0$. <br>Phương trình hệ quả có nghiệm $x=-1$, $x=3$. <br>- Thay $x=-1$ vào phương trình ban đầu: $\\sqrt{4} = \\sqrt{4}$ (đúng, nhận). <br>- Thay $x=3$ vào phương trình ban đầu: $\\sqrt{8} = \\sqrt{8}$ (đúng, nhận). <br>Vậy tập nghiệm là $S = \\{-1; 3\\}$." },
+                { id: "p1_14", question: "Phương trình $\\sqrt{x^2-2x+4} = x-2$ có tập nghiệm là:", options: ["$S = \\{0\\}$", "$S = \\{2\\}$", "$S = \\emptyset$", "$S = \\{0; 2\\}$"], correct: 2, explanation: "Bình phương hai vế: $x^2-2x+4 = (x-2)^2 \\Leftrightarrow x^2-2x+4 = x^2-4x+4 \\Leftrightarrow 2x=0 \\Leftrightarrow x=0$. <br>Thay $x=0$ vào phương trình ban đầu: $\\sqrt{4} = -2 \\Leftrightarrow 2 = -2$ (sai, loại). <br>Vậy phương trình vô nghiệm." },
+                { id: "p1_15", question: "Tập nghiệm của phương trình $\\sqrt{x^2+3x-2} = \\sqrt{x+1}$ là:", options: ["$S = \\{1; -3\\}$", "$S = \\{1\\}$", "$S = \\{-3\\}$", "$S = \\emptyset$"], correct: 1, explanation: "Bình phương hai vế: $x^2+3x-2 = x+1 \\Leftrightarrow x^2+2x-3=0$. <br>Phương trình hệ quả có nghiệm $x=1$, $x=-3$. <br>- Thay $x=1$ vào phương trình ban đầu: $\\sqrt{2} = \\sqrt{2}$ (đúng, nhận). <br>- Thay $x=-3$ vào phương trình ban đầu: $\\sqrt{-2} = \\sqrt{-2}$ (vô lý, loại). <br>Tập nghiệm là $S=\\{1\\}$." },
+                { id: "p1_16", question: "Nghiệm của phương trình $\\sqrt{2x^2-5x+1} = x-1$ là:", options: ["$x = 0$", "$x = 3$", "$x = 0, x = 3$", "Vô nghiệm"], correct: 1, explanation: "Bình phương hai vế: $2x^2-5x+1 = (x-1)^2 \\Leftrightarrow 2x^2-5x+1 = x^2-2x+1 \\Leftrightarrow x^2-3x=0$. <br>Phương trình hệ quả có nghiệm $x=0$, $x=3$. <br>- Thay $x=0$ vào phương trình gốc: $\\sqrt{1} = -1$ (sai, loại). <br>- Thay $x=3$ vào phương trình gốc: $\\sqrt{4} = 2$ (đúng, nhận). <br>Vậy phương trình có nghiệm duy nhất $x=3$." },
+                { id: "p1_17", question: "Phương trình $\\sqrt{x^2-x-2} = \\sqrt{2x^2+x-1}$ có bao nhiêu nghiệm?", options: ["0", "1", "2", "3"], correct: 1, explanation: "Bình phương hai vế: $x^2-x-2 = 2x^2+x-1 \\Leftrightarrow x^2+2x+1=0 \\Leftrightarrow (x+1)^2=0 \\Leftrightarrow x=-1$. <br>Thay $x=-1$ vào phương trình ban đầu: $\\sqrt{0} = \\sqrt{0}$ (đúng, nhận). <br>Vậy phương trình có $1$ nghiệm." },
+                { id: "p1_18", question: "Số nghiệm của phương trình $\\sqrt{x^2-4x+3} = x-1$ là:", options: ["0", "1", "2", "3"], correct: 1, explanation: "Bình phương hai vế: $x^2-4x+3 = (x-1)^2 \\Leftrightarrow x^2-4x+3 = x^2-2x+1 \\Leftrightarrow -2x = -2 \\Leftrightarrow x=1$. <br>Thay $x=1$ vào phương trình ban đầu: $\\sqrt{0} = 0$ (đúng, nhận). <br>Phương trình có $1$ nghiệm." },
+                { id: "p1_19", question: "Hai phương trình $\\sqrt{A} = B$ và $A = B^2$ là tương đương khi nào?", options: ["$A \\ge 0$", "$B \\ge 0$", "$B < 0$", "Luôn tương đương"], correct: 1, explanation: "Phương trình $\\sqrt{A} = B$ có ẩn phụ thuộc vào điều kiện $B \\ge 0$ (vì căn thức luôn không âm). Khi $B \\ge 0$, việc bình phương hai vế sẽ tạo ra phương trình tương đương $A = B^2$." },
+                { id: "p1_20", question: "Nghiệm của phương trình $\\sqrt{-x^2+4x} = 2x-2$ là:", options: ["$x = \\frac{2}{5}$", "$x = 2$", "$x = 2, x = \\frac{2}{5}$", "Vô nghiệm"], correct: 1, explanation: "Bình phương hai vế: $-x^2+4x = (2x-2)^2 \\Leftrightarrow -x^2+4x = 4x^2-8x+4 \\Leftrightarrow 5x^2-12x+4=0$. <br>Giải ra được $x=2$ hoặc $x=\\frac{2}{5}$. <br>- Thay $x=2$ vào phương trình gốc: $\\sqrt{4} = 2$ (đúng, nhận). <br>- Thay $x=\\frac{2}{5}$ vào phương trình gốc: $\\sqrt{\\frac{36}{25}} = \\frac{4}{5} - 2 = -\\frac{6}{5}$ (sai, loại). <br>Vậy nghiệm là $x=2$." },
+                { id: "p1_21", question: "Tập nghiệm của phương trình $\\sqrt{2x^2+3x-5} = x+1$ là:", options: ["$S = \\{2; -3\\}$", "$S = \\{-3\\}$", "$S = \\{2\\}$", "$S = \\emptyset$"], correct: 2, explanation: "Bình phương hai vế: $2x^2+3x-5 = (x+1)^2 \\Leftrightarrow 2x^2+3x-5 = x^2+2x+1 \\Leftrightarrow x^2+x-6=0$. <br>Phương trình có nghiệm $x=2$, $x=-3$. <br>- Thay $x=2$ vào phương trình gốc: $\\sqrt{9} = 3$ (đúng, nhận). <br>- Thay $x=-3$ vào phương trình gốc: $\\sqrt{4} = -2$ (sai, loại). <br>Vậy tập nghiệm là $S=\\{2\\}$." },
+                { id: "p1_22", question: "Nghiệm của phương trình $\\sqrt{x^2-3x+2} = \\sqrt{x^2-x+1}$ thuộc khoảng nào dưới đây?", options: ["$(0; 1)$", "$(1; 2)$", "$(-1; 0)$", "$(2; 3)$"], correct: 0, explanation: "Bình phương hai vế: $x^2-3x+2 = x^2-x+1 \\Leftrightarrow -2x = -1 \\Leftrightarrow x = \\frac{1}{2}$. <br>Thay $x=\\frac{1}{2}$ vào phương trình ban đầu: $\\sqrt{\\frac{3}{4}} = \\sqrt{\\frac{3}{4}}$ (đúng, nhận). <br>Giá trị $x = \\frac{1}{2} = 0.5$ nằm trong khoảng $(0; 1)$." },
+                { id: "p1_23", question: "Giải phương trình $\\sqrt{5x^2-x-2} = 2x$.", options: ["$x = -1$", "$x = 2$", "$x = -1, x = 2$", "Vô nghiệm"], correct: 1, explanation: "Bình phương hai vế: $5x^2-x-2 = (2x)^2 \\Leftrightarrow 5x^2-x-2 = 4x^2 \\Leftrightarrow x^2-x-2=0$. <br>Giải ra được $x=-1$, $x=2$. <br>- Thay $x=-1$ vào phương trình gốc: $\\sqrt{4} = -2$ (sai, loại). <br>- Thay $x=2$ vào phương trình gốc: $\\sqrt{16} = 4$ (đúng, nhận). <br>Nghiệm là $x=2$." },
+                { id: "p1_24", question: "Số nghiệm của phương trình $\\sqrt{x^2-2x} = \\sqrt{2x-x^2}$ là:", options: ["0", "1", "2", "Vô số"], correct: 2, explanation: "Bình phương hai vế: $x^2-2x = 2x-x^2 \\Leftrightarrow 2x^2-4x=0 \\Leftrightarrow 2x(x-2)=0 \\Rightarrow x=0$, $x=2$. <br>- Thay $x=0$ vào phương trình gốc: $\\sqrt{0} = \\sqrt{0}$ (đúng, nhận). <br>- Thay $x=2$ vào phương trình gốc: $\\sqrt{0} = \\sqrt{0}$ (đúng, nhận). <br>Phương trình có $2$ nghiệm." },
+                { id: "p1_25", question: "Tập nghiệm của phương trình $\\sqrt{x^2-x+1} = \\sqrt{2x^2-3x}$ là:", options: ["$S = \\{1; 2\\}$", "$S = \\{1\\}$", "$S = \\{1 \\pm \\sqrt{2}\\}$", "$S = \\emptyset$"], correct: 2, explanation: "Bình phương hai vế: $x^2-x+1 = 2x^2-3x \\Leftrightarrow x^2-2x-1=0 \\Rightarrow x = 1 \\pm \\sqrt{2}$. <br>- Thay $x = 1 + \\sqrt{2}$ vào biểu thức trong căn: $x^2-x+1 = 3+\\sqrt{2} > 0$ (đúng, nhận). <br>- Thay $x = 1 - \\sqrt{2}$ vào biểu thức trong căn: $x^2-x+1 = 3-\\sqrt{2} > 0$ (đúng, nhận). <br>Cả hai giá trị đều là nghiệm hợp lệ." },
+                { id: "p1_26", question: "Tập nghiệm của phương trình $\\sqrt{-x^2+4x-3} = \\sqrt{2x-3}$ là:", options: ["$S = \\{0; 2\\}$", "$S = \\{2\\}$", "$S = \\{0\\}$", "$S = \\emptyset$"], correct: 1, explanation: "Bình phương hai vế: $-x^2+4x-3 = 2x-3 \\Leftrightarrow x^2-2x=0 \\Rightarrow x=0$, $x=2$. <br>- Thay $x=0$ vào phương trình ban đầu: $\\sqrt{-3} = \\sqrt{-3}$ (vô lý, loại). <br>- Thay $x=2$ vào phương trình ban đầu: $\\sqrt{1} = \\sqrt{1}$ (đúng, nhận). <br>Vậy tập nghiệm là $S=\\{2\\}$." },
+                { id: "p1_27", question: "Thông và Minh hẹn gặp nhau tại điểm M trên đoạn BC. Khoảng cách AB=5km vuông góc với BC. Thông đi từ A vận tốc 5km/h, Minh đi từ B vận tốc 3km/h. Khoảng cách BM là bao nhiêu để hai người gặp nhau cùng lúc?", options: ["3.75 km", "4 km", "3.5 km", "4.25 km"], correct: 0, explanation: "Giả sử $BM=x$ (km). Quãng đường Thông đi là $AM = \\sqrt{25+x^2}$. <br>Thời gian gặp nhau bằng nhau: $\\frac{x}{3} = \\frac{\\sqrt{25+x^2}}{5}$. <br>Bình phương $2$ vế: $\\frac{x^2}{9} = \\frac{25+x^2}{25} \\Leftrightarrow 25x^2 = 225 + 9x^2 \\Leftrightarrow 16x^2 = 225 \\Rightarrow x^2 = \\frac{225}{16}$. <br>Vì quãng đường lớn hơn $0$ nên $x = \\frac{15}{4} = 3.75$ km." },
+                { id: "p1_28", question: "Một khuôn viên hình chữ nhật có đường chéo 25m, dùng hết 70m hàng rào để rào quanh. Diện tích khuôn viên là:", options: ["300 $m^2$", "400 $m^2$", "350 $m^2$", "250 $m^2$"], correct: 0, explanation: "Gọi $2$ kích thước là $x, y$. Nửa chu vi $x+y = 70/2 = 35$. Đường chéo $\\sqrt{x^2+y^2}=25 \\Rightarrow x^2+y^2=625$. <br>Bình phương tổng: $(x+y)^2 = x^2+y^2+2xy \\Rightarrow 35^2 = 625 + 2xy \\Rightarrow 1225 = 625 + 2xy$. <br>Diện tích $xy = \\frac{1225-625}{2} = 300\\text{ m}^2$." },
+                { id: "p1_29", question: "Giải phương trình $\\sqrt{4x^2-1} = \\sqrt{3x^2+3}$.", options: ["$x = \\pm 2$", "$x = 2$", "$x = -2$", "Vô nghiệm"], correct: 0, explanation: "Bình phương hai vế: $4x^2-1 = 3x^2+3 \\Leftrightarrow x^2 = 4 \\Rightarrow x = \\pm 2$. <br>Thay $x = \\pm 2$ vào phương trình ban đầu ta được $\\sqrt{15} = \\sqrt{15}$ (đúng, nhận). <br>Vậy phương trình có $2$ nghiệm $x = \\pm 2$." },
+                { id: "p1_30", question: "Phương trình $\\sqrt{x^2-1} = x$ có tập nghiệm là:", options: ["$S = \\emptyset$", "$S = \\{1\\}$", "$S = \\{-1\\}$", "$S = \\{0\\}$"], correct: 0, explanation: "Bình phương hai vế ta được: $x^2-1 = x^2 \\Leftrightarrow -1 = 0$ (vô lý). <br>Phương trình hệ quả vô nghiệm nên phương trình ban đầu vô nghiệm." }
+            ],
+            part2: [
+                { id: "p2_1", question: "Cho phương trình $\\sqrt{2x^2-3x+5}=x+1$ (1). Xét tính đúng/sai:", items: [
+                    { text: "Bình phương hai vế phương trình, ta thu được phương trình hệ quả $x^2-5x+4=0$.", isTrue: true },
+                    { text: "Phương trình hệ quả có hai nghiệm phân biệt là $x=1$ và $x=4$.", isTrue: true },
+                    { text: "Giá trị $x=-1$ là một nghiệm của phương trình ban đầu.", isTrue: false },
+                    { text: "Tổng bình phương các nghiệm của phương trình (1) là 17.", isTrue: true }
+                ], explanation: "<b>Giải thích chi tiết:</b><br>a) Đúng. Bình phương hai vế: $2x^2-3x+5 = (x+1)^2 \\Leftrightarrow 2x^2-3x+5 = x^2+2x+1 \\Leftrightarrow x^2-5x+4=0$.<br>b) Đúng. Phương trình $x^2-5x+4=0$ có hai nghiệm là $x=1$ và $x=4$.<br>c) Sai. Thay $x=-1$ vào phương trình gốc: $\\sqrt{10} = 0$ (sai, loại).<br>d) Đúng. Thay $x=1$ và $x=4$ vào phương trình ban đầu đều thỏa mãn (ra kết quả lần lượt $2=2$ và $5=5$). Tổng bình phương $1^2+4^2=17$." },
+                { id: "p2_2", question: "Cho phương trình $\\sqrt{x^2+2x+m}=\\sqrt{x+2}$ (2) với m là tham số.", items: [
+                    { text: "Khi $m=0$, thay $x=0$ vào phương trình ban đầu, hai vế bằng nhau.", isTrue: false },
+                    { text: "Khi $m=0$, bình phương hai vế phương trình ta được phương trình $x^2+x-2=0$.", isTrue: true },
+                    { text: "Khi $m=0$, tích các nghiệm của phương trình (2) bằng -2.", isTrue: true },
+                    { text: "Để phương trình có 2 nghiệm phân biệt thì $0 \\le m < \\frac{9}{4}$.", isTrue: true }
+                ], explanation: "<b>Giải thích chi tiết:</b><br>a) Sai. Khi $m=0$, phương trình là $\\sqrt{x^2+2x}=\\sqrt{x+2}$. Thay $x=0$ ta được $0 = \\sqrt{2}$ (vô lý).<br>b) Đúng. Bình phương $2$ vế ta có $x^2+2x=x+2 \\Leftrightarrow x^2+x-2=0$.<br>c) Đúng. Giải phương trình trên được $x=1$, $x=-2$. Thay lại vào phương trình ban đầu đều thỏa mãn (ra $\\sqrt{3}=\\sqrt{3}$ và $0=0$). Tích hai nghiệm là $-2$.<br>d) Đúng. Bình phương $2$ vế được $x^2+x+(m-2)=0$. Để phương trình gốc có $2$ nghiệm phân biệt, phương trình bậc hai phải có $2$ nghiệm thỏa mãn $x+2 \\ge 0 \\Rightarrow x \\ge -2$. Phân tích đồ thị parabol cho thấy khoảng $0 \\le m < \\frac{9}{4}$ là chính xác." },
+                { id: "p2_3", question: "Shiper gọi điện cho khách ở vị trí A, hẹn gặp tại M để giao hàng. Biết $AB \\perp BC$, $AB=0.5km$, $BC=20km$. M nằm trên BC. Shiper đi từ C vận tốc 50km/h, khách đạp xe từ A vận tốc 5km/h. Hai người xuất phát cùng lúc và đến M cùng lúc. Gọi $BM=x$ (km).", items: [
+                    { text: "Thời gian khách đi từ A đến M biểu diễn theo x là $\\frac{\\sqrt{0.25+x^2}}{5}$.", isTrue: true },
+                    { text: "Thời gian Shiper đi từ C đến M là $\\frac{20-x}{50}$.", isTrue: true },
+                    { text: "Để gặp nhau cùng lúc thì $x$ bằng 2.5 km.", isTrue: false },
+                    { text: "Quãng đường Shiper đi được xấp xỉ 18.2 km.", isTrue: true }
+                ], explanation: "<b>Giải thích chi tiết:</b><br>a) Đúng. Theo định lý Pytago $AM = \\sqrt{AB^2+BM^2} = \\sqrt{0.5^2+x^2}$, thời gian là $\\frac{AM}{5}$.<br>b) Đúng. Quãng đường Shiper đi $CM = 20-x$, thời gian là $\\frac{CM}{50}$.<br>c) Sai. Cho hai thời gian bằng nhau và bình phương ta được $100(0.25+x^2) = (20-x)^2 \\Rightarrow x \\approx 1.76$ km.<br>d) Đúng. Quãng đường Shiper đi là $20 - 1.76 = 18.24 \\approx 18.2$ km." },
+                { id: "p2_4", question: "Một mảnh đất hình chữ nhật có độ dài đường chéo là 50m. Người ta dùng hết 140m hàng rào để rào kín khu đất đó. Gọi độ dài một cạnh của hình chữ nhật là x (m).", items: [
+                    { text: "Nửa chu vi của hình chữ nhật là 70m.", isTrue: true },
+                    { text: "Độ dài cạnh còn lại của hình chữ nhật được biểu diễn là $140 - x$.", isTrue: false },
+                    { text: "Bình phương 2 vế của phương trình Pytago ta được phương trình $2x^2-140x+2400=0$.", isTrue: true },
+                    { text: "Diện tích của mảnh đất là $1200 m^2$.", isTrue: true }
+                ], explanation: "<b>Giải thích chi tiết:</b><br>a) Đúng. Nửa chu vi bằng chu vi chia đôi: $140/2 = 70$m.<br>b) Sai. Cạnh còn lại là nửa chu vi trừ đi cạnh kia, tức là $70 - x$.<br>c) Đúng. Pytago: $x^2 + (70-x)^2 = 50^2 \\Leftrightarrow x^2 + 4900 - 140x + x^2 = 2500 \\Leftrightarrow 2x^2 - 140x + 2400 = 0$.<br>d) Đúng. Giải phương trình trên được $x=30$ hoặc $x=40$. Diện tích $S = 30 \\cdot 40 = 1200\\text{ m}^2$." },
+                { id: "p2_5", question: "Bác An có một mảnh đất hình tam giác vuông có cạnh huyền bằng 100m. Bác đã dùng 240m hàng rào để rào mảnh đất. Biết chi phí trồng hoa là 10.000 đồng/m².", items: [
+                    { text: "Tổng độ dài hai cạnh góc vuông của mảnh đất là 140m.", isTrue: true },
+                    { text: "Gọi $x$ là độ dài một cạnh góc vuông, cạnh còn lại là $\\sqrt{100^2-x^2}$.", isTrue: true },
+                    { text: "Giải phương trình mô hình ta được 2 cạnh góc vuông là 60m và 80m.", isTrue: true },
+                    { text: "Tổng chi phí bác An đầu tư trồng hoa là 48 triệu đồng.", isTrue: false }
+                ], explanation: "<b>Giải thích chi tiết:</b><br>a) Đúng. Tổng $3$ cạnh là $240$, nên tổng hai cạnh góc vuông là $240 - 100 = 140$m.<br>b) Đúng. Theo định lý Pytago, cạnh góc vuông còn lại là $\\sqrt{100^2-x^2}$.<br>c) Đúng. Phương trình: $\\sqrt{100^2-x^2} = 140 - x$. Bình phương $2$ vế giải ra ta được $x=60$ hoặc $x=80$.<br>d) Sai. Diện tích tam giác vuông là $S = \\frac{1}{2} \\cdot 60 \\cdot 80 = 2400\\text{ m}^2$. Chi phí: $2400 \\cdot 10.000 = 24.000.000$ đồng ($24$ triệu)." },
+                { id: "p2_6", question: "Một hoa văn hình chữ nhật nội tiếp hình tròn đường kính 10cm. Người ta dùng 28cm dây kim loại để viền quanh hình chữ nhật.", items: [
+                    { text: "Đường kính của hình tròn bằng đường chéo của hình chữ nhật.", isTrue: true },
+                    { text: "Nửa chu vi của hình chữ nhật là 28cm.", isTrue: false },
+                    { text: "Các kích thước của hình chữ nhật là 6cm và 8cm.", isTrue: true },
+                    { text: "Diện tích của hình chữ nhật là $48 cm^2$.", isTrue: true }
+                ], explanation: "<b>Giải thích chi tiết:</b><br>a) Đúng. Do góc nội tiếp chắn nửa đường tròn là góc vuông.<br>b) Sai. Chu vi bằng $28$cm thì nửa chu vi là $28/2 = 14$cm.<br>c) Đúng. Gọi $2$ cạnh là $x,y \\Rightarrow x+y=14$ và $x^2+y^2=10^2=100$. Ta có: $(x+y)^2 = x^2+y^2+2xy \\Rightarrow 196=100+2xy \\Rightarrow xy=48$. Giải hệ ta được $6$cm và $8$cm.<br>d) Đúng. Diện tích bằng $6 \\cdot 8 = 48\\text{ cm}^2$." },
+                { id: "p2_7", question: "Xét phương trình $\\sqrt{x^2-4x+3} = x-1$.", items: [
+                    { text: "Bình phương hai vế phương trình, ta thu được phương trình hệ quả $x^2-4x+3 = (x-1)^2$.", isTrue: true },
+                    { text: "Rút gọn phương trình hệ quả, ta được phương trình bậc nhất $-2x+2=0$.", isTrue: true },
+                    { text: "Phương trình hệ quả có nghiệm duy nhất $x=1$.", isTrue: true },
+                    { text: "Thay $x=1$ vào phương trình ban đầu ta thấy hai vế không bằng nhau.", isTrue: false }
+                ], explanation: "<b>Giải thích chi tiết:</b><br>a) Đúng. Theo phương pháp giải, bình phương $2$ vế sẽ loại bỏ dấu căn.<br>b) Đúng. Khai triển vế phải: $x^2-4x+3 = x^2-2x+1 \\Leftrightarrow -2x+2=0$.<br>c) Đúng. Giải $-2x+2=0 \\Leftrightarrow x=1$.<br>d) Sai. Thay $x=1$ vào phương trình gốc: $\\sqrt{1-4+3} = 1-1 \\Leftrightarrow 0=0$ (mệnh đề đúng)." },
+                { id: "p2_8", question: "Xét phương trình $\\sqrt{2x^2-x-3} = \\sqrt{x^2-x+1}$.", items: [
+                    { text: "Bình phương hai vế phương trình ta được phương trình $x^2 - 4 = 0$.", isTrue: true },
+                    { text: "Phương trình hệ quả có hai nghiệm là $x = 2$ và $x = -2$.", isTrue: true },
+                    { text: "Thay $x = -2$ vào phương trình ban đầu, biểu thức dưới căn bị âm nên loại.", isTrue: false },
+                    { text: "Cả hai nghiệm của phương trình hệ quả đều là nghiệm của phương trình ban đầu.", isTrue: true }
+                ], explanation: "<b>Giải thích chi tiết:</b><br>a) Đúng. Bình phương $2$ vế: $2x^2-x-3 = x^2-x+1 \\Leftrightarrow x^2-4=0$.<br>b) Đúng. $x^2=4 \\Rightarrow x = 2$, $x = -2$.<br>c) Sai. Thay $x=-2$ vào phương trình ban đầu: $\\sqrt{2(-2)^2 - (-2) - 3} = \\sqrt{7}$ và $\\sqrt{(-2)^2 - (-2) + 1} = \\sqrt{7}$ (biểu thức dương, nhận).<br>d) Đúng. Thử lại cả $x=2$ và $x=-2$ đều thỏa mãn phương trình." },
+                { id: "p2_9", question: "Cho phương trình $\\sqrt{-x^2+2x+4} = x-2$.", items: [
+                    { text: "Bình phương hai vế phương trình, ta được phương trình hệ quả $2x^2-6x=0$.", isTrue: true },
+                    { text: "Phương trình hệ quả có hai nghiệm là $x=0$ và $x=3$.", isTrue: true },
+                    { text: "Thay $x=0$ vào phương trình ban đầu, ta được một mệnh đề đúng.", isTrue: false },
+                    { text: "Phương trình ban đầu có tập nghiệm là $S=\\{3\\}$.", isTrue: true }
+                ], explanation: "<b>Giải thích chi tiết:</b><br>a) Đúng. $-x^2+2x+4 = (x-2)^2 \\Leftrightarrow -x^2+2x+4 = x^2-4x+4 \\Leftrightarrow 2x^2-6x=0$.<br>b) Đúng. $2x^2-6x=0 \\Leftrightarrow 2x(x-3)=0 \\Rightarrow x=0$, $x=3$.<br>c) Sai. Thay $x=0$ vào phương trình gốc: $\\sqrt{4} = -2 \\Leftrightarrow 2=-2$ (mệnh đề sai, loại $x=0$).<br>d) Đúng. Thay $x=3$ vào phương trình gốc: $\\sqrt{1} = 1$ (đúng). Vậy nhận nghiệm $x=3$." },
+                { id: "p2_10", question: "Cho phương trình $(x-3)\\sqrt{4-x^2} = x^2-4x+3$.", items: [
+                    { text: "Chuyển vế và đặt nhân tử chung, ta có: $(x-3)(\\sqrt{4-x^2} - x + 1) = 0$.", isTrue: true },
+                    { text: "Từ phương trình tích trên, ta thu được hai trường hợp: $x-3=0$ hoặc $\\sqrt{4-x^2}=x-1$.", isTrue: true },
+                    { text: "Thay $x=3$ vào biểu thức trong căn thì không thỏa mãn nên $x=3$ bị loại.", isTrue: true },
+                    { text: "Phương trình $\\sqrt{4-x^2}=x-1$ có hai nghiệm phân biệt hợp lệ.", isTrue: false }
+                ], explanation: "<b>Giải thích chi tiết:</b><br>a) Đúng. Vế phải là $x^2-4x+3 = (x-1)(x-3)$. Chuyển vế $\\Rightarrow (x-3)(\\sqrt{4-x^2} - (x-1)) = 0$.<br>b) Đúng. Dựa vào tính chất phương trình tích $A \\cdot B = 0$.<br>c) Đúng. Thay $x=3$ vào căn $\\Rightarrow \\sqrt{4-9} = \\sqrt{-5}$ (vô lý, loại $x=3$).<br>d) Sai. Bình phương hai vế phương trình $\\sqrt{4-x^2}=x-1 \\Rightarrow 4-x^2=x^2-2x+1 \\Leftrightarrow 2x^2-2x-3=0 \\Rightarrow x = \\frac{1 \\pm \\sqrt{7}}{2}$. Thử lại chỉ có nghiệm $x = \\frac{1 + \\sqrt{7}}{2}$ làm $2$ vế bằng nhau." }
+            ],
+            part3: [
+                { id: "p3_1", question: "Giải phương trình $\\sqrt{x^2-3x+2} = \\sqrt{2x^2-7x+5}$. Tính tổng các nghiệm của phương trình.", keywords: ["4"], explanation: "Bình phương hai vế: $x^2-3x+2 = 2x^2-7x+5 \\Leftrightarrow x^2-4x+3=0 \\Rightarrow x=1$, $x=3$. <br>- Thay $x=1$ vào phương trình ban đầu $\\Rightarrow 0=0$ (nhận). <br>- Thay $x=3$ vào phương trình ban đầu $\\Rightarrow \\sqrt{2}=\\sqrt{2}$ (nhận). <br>Tổng hai nghiệm là $1+3=4$." },
+                { id: "p3_2", question: "Số nghiệm của phương trình $\\sqrt{2x^2-3x-5} = x-1$ là bao nhiêu?", keywords: ["1"], explanation: "Bình phương hai vế: $2x^2-3x-5 = (x-1)^2 \\Leftrightarrow 2x^2-3x-5 = x^2-2x+1 \\Leftrightarrow x^2-x-6=0 \\Rightarrow x=3$, $x=-2$. <br>- Thay $x=3$ vào phương trình ban đầu $\\Rightarrow 2=2$ (nhận). <br>- Thay $x=-2$ vào phương trình ban đầu $\\Rightarrow 3=-3$ (sai, loại). <br>Vậy phương trình có $1$ nghiệm." },
+                { id: "p3_3", question: "Cần làm 2 sân Pickleball trong một khuôn viên hình chữ nhật có độ dài đường chéo là 25m. Người ta rào lưới xung quanh khuôn viên và dùng hết 70m hàng rào. Tính diện tích của khuôn viên đó ($m^2$).", keywords: ["300"], explanation: "Gọi $2$ cạnh là $x,y$. Nửa chu vi $x+y=35$. Đường chéo $x^2+y^2=625$. <br>Bình phương tổng $(x+y)^2 = 1225 \\Rightarrow x^2+y^2+2xy = 1225$. <br>Diện tích $xy = \\frac{1225-625}{2} = 300\\text{ m}^2$." },
+                { id: "p3_4", question: "Tính tổng bình phương các nghiệm của phương trình $\\sqrt{x^2-x-2} = \\sqrt{2x^2+x-5}$.", keywords: ["9"], explanation: "Bình phương hai vế: $x^2-x-2 = 2x^2+x-5 \\Leftrightarrow x^2+2x-3=0 \\Rightarrow x=1$, $x=-3$. <br>- Thay $x=1$ vào phương trình ban đầu ta có $\\sqrt{-2}$ (vô lý, loại). <br>- Thay $x=-3$ vào phương trình ban đầu ta có $\\sqrt{10}=\\sqrt{10}$ (nhận). <br>Phương trình có nghiệm duy nhất $x=-3$. Tổng bình phương là $(-3)^2 = 9$." },
+                { id: "p3_5", question: "Nghiệm của phương trình $\\sqrt{-x^2+4x-3} = 2x-5$ là phân số tối giản $\\frac{a}{b}$. Tính tổng $a+b$.", keywords: ["19"], explanation: "Bình phương hai vế: $-x^2+4x-3 = (2x-5)^2 \\Leftrightarrow -x^2+4x-3 = 4x^2-20x+25 \\Leftrightarrow 5x^2-24x+28=0$. <br>Phương trình hệ quả có nghiệm $x=2$ và $x=\\frac{14}{5}$. <br>- Thay $x=2$ vào phương trình ban đầu ta được $1=-1$ (sai, loại). <br>- Thay $x=\\frac{14}{5}$ vào phương trình ban đầu ta được $\\frac{3}{5} = \\frac{3}{5}$ (đúng, nhận). <br>Vậy nghiệm là $x = \\frac{14}{5}$. Suy ra $a=14, b=5 \\Rightarrow a+b=19$." },
+                { id: "p3_6", question: "Tính tổng các nghiệm của phương trình $\\sqrt{3x^2-4x+1} = \\sqrt{x^2-2x+1}$.", keywords: ["1"], explanation: "Bình phương hai vế: $3x^2-4x+1 = x^2-2x+1 \\Leftrightarrow 2x^2-2x=0 \\Rightarrow x=0$, $x=1$. <br>- Thay $x=0$ vào phương trình ban đầu $\\Rightarrow 1=1$ (nhận). <br>- Thay $x=1$ vào phương trình ban đầu $\\Rightarrow 0=0$ (nhận). <br>Cả $2$ nghiệm đều thỏa mãn. Tổng là $0+1=1$." },
+                { id: "p3_7", question: "Giải phương trình $\\sqrt{2x^2+5x-3} = x+1$. Tính tích các nghiệm của phương trình (nếu chỉ có 1 nghiệm, hãy điền nghiệm đó).", keywords: ["1"], explanation: "Bình phương hai vế: $2x^2+5x-3 = (x+1)^2 \\Leftrightarrow 2x^2+5x-3 = x^2+2x+1 \\Leftrightarrow x^2+3x-4=0 \\Rightarrow x=1$, $x=-4$. <br>- Thay $x=1$ vào phương trình ban đầu $\\Rightarrow 2=2$ (nhận). <br>- Thay $x=-4$ vào phương trình ban đầu $\\Rightarrow 3=-3$ (sai, loại). <br>Phương trình có nghiệm duy nhất $x=1$. Tích các nghiệm là $1$." },
+                { id: "p3_8", question: "Nghiệm của phương trình $\\sqrt{2x^2-5x-9} = x-1$ là bao nhiêu?", keywords: ["5"], explanation: "Bình phương hai vế: $2x^2-5x-9 = (x-1)^2 \\Leftrightarrow 2x^2-5x-9 = x^2-2x+1 \\Leftrightarrow x^2-3x-10=0 \\Rightarrow x=5$, $x=-2$. <br>- Thay $x=5$ vào phương trình ban đầu ta được $4=4$ (đúng, nhận). <br>- Thay $x=-2$ vào phương trình ban đầu ta được $3=-3$ (sai, loại). <br>Vậy nghiệm là $x=5$." },
+                { id: "p3_9", question: "Tính tích các nghiệm của phương trình $\\sqrt{2x^2+x+3} = 1-x$.", keywords: ["2"], explanation: "Bình phương hai vế: $2x^2+x+3 = (1-x)^2 \\Leftrightarrow 2x^2+x+3 = 1-2x+x^2 \\Leftrightarrow x^2+3x+2=0 \\Rightarrow x=-1$, $x=-2$. <br>- Thay $x=-1$ vào phương trình ban đầu $\\Rightarrow 2=2$ (nhận). <br>- Thay $x=-2$ vào phương trình ban đầu $\\Rightarrow 3=3$ (nhận). <br>Cả $2$ nghiệm đều hợp lệ. Tích là $(-1)(-2) = 2$." },
+                { id: "p3_10", question: "Tìm giá trị nguyên lớn nhất của tham số $m$ để phương trình $\\sqrt{x^2-3x+m} = x-2$ có nghiệm.", keywords: ["2"], explanation: "Bình phương hai vế: $x^2-3x+m = (x-2)^2 \\Leftrightarrow x^2-3x+m = x^2-4x+4 \\Leftrightarrow x = 4-m$. <br>Để $x=4-m$ là nghiệm thì khi thay vào phương trình ban đầu phải làm cho vế phải không âm, tức là: $x-2 \\ge 0 \\Leftrightarrow (4-m)-2 \\ge 0 \\Leftrightarrow 2-m \\ge 0 \\Leftrightarrow m \\le 2$. <br>Giá trị nguyên lớn nhất của tham số $m$ là $2$." }
+            ]
+        };
+
+        let currentSession = [];
+        let currentIndex = 0;
+        let score = 0;
+        let selectedAnswers = null;
+
+        function shuffle(array) { return array.sort(() => Math.random() - 0.5); }
+
+        function initGame() {
+            // Anti-repetition: Lấy danh sách ID của LƯỢT ĐỀ LIỀN TRƯỚC
+            const lastRoundIds = JSON.parse(localStorage.getItem('played_ids_ptqvptbh_v2') || '[]');
+            
+            const getFresh = (pool, count) => {
+                // Lọc BỎ HOÀN TOÀN những câu đã xuất hiện ở lượt ngay trước
+                let available = pool.filter(q => !lastRoundIds.includes(q.id));
+                
+                let selected = [];
+                if (available.length >= count) {
+                    selected = shuffle(available).slice(0, count);
+                } else {
+                    selected = [...available];
+                    let needed = count - available.length;
+                    let recycled = pool.filter(q => lastRoundIds.includes(q.id));
+                    selected = selected.concat(shuffle(recycled).slice(0, needed));
+                }
+                return selected;
+            };
+
+            const p1 = getFresh(MASTER_POOL.part1, 7);
+            const p2 = getFresh(MASTER_POOL.part2, 5);
+            const p3 = getFresh(MASTER_POOL.part3, 3);
+
+            currentSession = [...p1, ...p2, ...p3];
+            
+            // LƯU LẠI ID của lượt này để cấm lặp ở lượt tiếp theo (Tỷ lệ lặp 0%)
+            localStorage.setItem('played_ids_ptqvptbh_v2', JSON.stringify(currentSession.map(q => q.id)));
+
+            currentIndex = 0; 
+            score = 0;
+            document.getElementById('start-screen').classList.add('hidden');
+            document.getElementById('progress-container').classList.remove('hidden');
+            document.getElementById('footer-actions').classList.remove('hidden');
+            renderQuestion();
+        }
+
+        function renderQuestion() {
+            const container = document.getElementById('main-content');
+            const data = currentSession[currentIndex];
+            const qNum = currentIndex + 1;
+            selectedAnswers = (currentIndex < 7) ? null : (currentIndex < 12 ? {} : "");
+
+            document.getElementById('status').innerText = `CÂU ${qNum} / 15`;
+            document.getElementById('progress-bar').style.width = `${(qNum / 15) * 100}%`;
+            document.getElementById('check-btn').classList.remove('hidden');
+            document.getElementById('next-btn').classList.add('hidden');
+            document.getElementById('result-btn').classList.add('hidden');
+
+            let html = `<div class="fade-in">
+                <div class="mb-10 flex items-center gap-4">
+                    <span class="bg-sky-600 text-white text-xs font-black px-5 py-2.5 rounded-2xl uppercase tracking-widest shadow-lg shadow-sky-100">PHẦN ${qNum <= 7 ? 'I: TRẮC NGHIỆM' : (qNum <= 12 ? 'II: ĐÚNG/SAI' : 'III: TRẢ LỜI NGẮN')}</span>
+                </div>
+                <div class="text-xl md:text-2xl font-bold text-gray-800 mb-12 leading-relaxed math-render" id="q-text">${data.question}</div>`;
+
+            if (currentIndex < 7) { 
+                html += `<div class="grid gap-6">`;
+                data.options.forEach((opt, i) => {
+                    html += `<button onclick="pickMCQ(${i})" id="mcq-${i}" class="choice-btn group p-7 border-2 border-gray-100 rounded-[2rem] text-left hover:border-sky-400 hover:bg-sky-50 transition-all flex items-center gap-8">
+                        <div class="w-14 h-14 rounded-3xl bg-gray-50 flex items-center justify-center font-black text-gray-400 group-hover:text-sky-600 transition-colors text-2xl">${String.fromCharCode(65+i)}</div>
+                        <div class="text-xl font-semibold text-gray-700 math-render">${opt}</div>
+                    </button>`;
+                });
+                html += `</div>`;
+            } else if (currentIndex < 12) { 
+                html += `<div class="space-y-6">`;
+                data.items.forEach((item, i) => {
+                    html += `<div class="item-row flex flex-col md:flex-row md:items-center justify-between p-7 bg-gray-50 rounded-[2.5rem] border border-gray-100 gap-6 shadow-sm">
+                        <div class="flex items-start gap-4">
+                            <span class="font-black text-sky-500 mt-1 text-lg">${['a)', 'b)', 'c)', 'd)'][i]}</span>
+                            <span class="text-xl text-gray-700 font-bold leading-relaxed math-render">${item.text}</span>
+                        </div>
+                        <div class="flex gap-4 min-w-[260px]">
+                            <button onclick="pickTF(${i}, true)" id="tf-${i}-t" class="flex-1 py-5 rounded-[1.5rem] border-2 border-white bg-white font-black text-lg transition active:scale-90 shadow-sm text-gray-400 hover:text-sky-600">ĐÚNG</button>
+                            <button onclick="pickTF(${i}, false)" id="tf-${i}-f" class="flex-1 py-5 rounded-[1.5rem] border-2 border-white bg-white font-black text-lg transition active:scale-90 shadow-sm text-gray-400 hover:text-sky-600">SAI</button>
+                        </div>
+                    </div>`;
+                });
+                html += `</div>`;
+            } else { 
+                html += `<div class="relative max-w-lg mx-auto mt-12">
+                    <input type="text" id="short-ans" class="w-full p-10 border-4 border-gray-100 rounded-[3rem] text-5xl font-black text-center text-sky-600 focus:border-sky-500 outline-none transition shadow-inner" placeholder="Nhập đáp án...">
+                </div>`;
+            }
+
+            html += `<div id="exp-box" class="hidden mt-12 p-10 rounded-[3rem] explanation-box"></div></div>`;
+            container.innerHTML = html;
+            
+            if (window.MathJax) {
+                MathJax.typesetPromise().then(() => {
+                    document.querySelectorAll('.math-render').forEach(el => el.classList.add('ready'));
+                });
+            }
+        }
+
+        function pickMCQ(idx) {
+            selectedAnswers = idx;
+            document.querySelectorAll('[id^="mcq-"]').forEach(b => {
+                b.classList.replace('border-sky-500', 'border-gray-100');
+                b.classList.remove('bg-sky-50');
+            });
+            document.getElementById(`mcq-${idx}`).classList.replace('border-gray-100', 'border-sky-500');
+            document.getElementById(`mcq-${idx}`).classList.add('bg-sky-50');
+        }
+
+        function pickTF(idx, val) {
+            if (typeof selectedAnswers !== 'object') selectedAnswers = {};
+            selectedAnswers[idx] = val;
+            const btnT = document.getElementById(`tf-${idx}-t`), btnF = document.getElementById(`tf-${idx}-f`);
+            btnT.className = `flex-1 py-5 rounded-[1.5rem] border-2 font-black text-lg transition active:scale-90 ${val === true ? 'bg-sky-600 text-white border-sky-600 shadow-md' : 'bg-white border-white text-gray-400'}`;
+            btnF.className = `flex-1 py-5 rounded-[1.5rem] border-2 font-black text-lg transition active:scale-90 ${val === false ? 'bg-sky-600 text-white border-sky-600 shadow-md' : 'bg-white border-white text-gray-400'}`;
+        }
+
+        function processAnswer() {
+            const data = currentSession[currentIndex];
+            let isCorrect = false;
+
+            if (currentIndex < 7) {
+                if (selectedAnswers === null) return alert("Vui lòng chọn đáp án!");
+                isCorrect = (selectedAnswers === data.correct);
+                if (isCorrect) score += 1;
+                document.getElementById(`mcq-${data.correct}`).classList.add('bg-green-50', 'border-green-500');
+                if(!isCorrect) document.getElementById(`mcq-${selectedAnswers}`).classList.add('bg-red-50', 'border-red-500');
+            } else if (currentIndex < 12) {
+                let correctCount = 0;
+                let isFullAnswered = true;
+                for(let i=0; i<4; i++) { if(selectedAnswers[i] === undefined) isFullAnswered = false; }
+                if(!isFullAnswered) return alert("Vui lòng chọn Đúng/Sai cho tất cả các ý!");
+
+                data.items.forEach((item, i) => { if (selectedAnswers[i] === item.isTrue) correctCount++; });
+                const points = [0, 0.1, 0.25, 0.5, 1];
+                score += points[correctCount];
+                isCorrect = (correctCount === 4);
+            } else {
+                const input = document.getElementById('short-ans').value.trim().toLowerCase().replace(',', '.');
+                if(!input) return alert("Vui lòng nhập đáp án!");
+                isCorrect = data.keywords.some(k => input.includes(k.toLowerCase()));
+                if (isCorrect) score += 1;
+            }
+
+            const exp = document.getElementById('exp-box');
+            exp.innerHTML = `<h4 class="text-sky-800 font-extrabold text-2xl mb-6 uppercase tracking-tighter">${isCorrect ? '✨ HOÀN TOÀN CHÍNH XÁC!' : '❌ HÃY KIỂM TRA LẠI LỜI GIẢI'}</h4>
+                             <div class="text-sky-900 font-medium leading-loose math-render text-lg" id="exp-text">${data.explanation}</div>`;
+            exp.classList.remove('hidden');
+            document.getElementById('check-btn').classList.add('hidden');
+
+            if (currentIndex === 14) document.getElementById('result-btn').classList.remove('hidden');
+            else document.getElementById('next-btn').classList.remove('hidden');
+            
+            if (window.MathJax) {
+                MathJax.typesetPromise().then(() => {
+                    const el = document.getElementById('exp-text');
+                    if(el) el.classList.add('ready');
+                });
+            }
+        }
+
+        function renderNext() { currentIndex++; renderQuestion(); }
+
+        function finishGame() {
+            const container = document.getElementById('main-content');
+            document.getElementById('footer-actions').classList.add('hidden');
+            document.getElementById('progress-container').classList.add('hidden');
+            
+            // System scaled to 10 points (Max raw score is 15 points)
+            const finalScore = ((score / 15) * 10).toFixed(2);
+            let rank = finalScore >= 8.5 ? "XUẤT SẮC" : (finalScore >= 6.5 ? "KHÁ GIỎI" : "CẦN CỐ GẮNG");
+            
+            container.innerHTML = `<div class="text-center py-20 fade-in">
+                <div class="text-[12rem] mb-12 animate-pulse drop-shadow-2xl">🏆</div>
+                <h2 class="text-6xl font-black text-gray-800 mb-6 uppercase tracking-tighter">${rank}</h2>
+                <div class="text-[10rem] leading-none font-black text-sky-600 my-16 tracking-tighter italic">${finalScore}<span class="text-4xl text-gray-300 ml-6 not-italic">/ 10</span></div>
+                <button onclick="location.reload()" class="bg-sky-600 text-white px-24 py-8 rounded-[3rem] font-black text-3xl shadow-2xl hover:bg-sky-700 transition active:scale-95 uppercase tracking-wide">CHƠI LẠI</button>
+            </div>`;
+        }
+    </script>
+</body>
+</html>
